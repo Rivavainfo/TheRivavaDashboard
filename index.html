@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en" class="transition-colors duration-500">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rivava — Make It Simple.</title>
+<meta name="description" content="Rivava: Clear, controlled, and growing personal finances."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+  --bg-dark: #060e1f;
+  --panel-dark: #0b1120;
+  --text-dark: #e6eef6;
+  --muted-dark: #9aa4b2;
+
+  --bg-light: #f5f7fa;
+  --panel-light: #ffffff;
+  --text-light: #0b1120;
+  --muted-light: #4b5563;
+
+  --accent: #7de3d8;
+  --accent2: #6fb4ff;
+}
+html, body {height:100%;}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
+}
+.glass-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+}
+.light .glass-panel {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.btn-primary {
+  background: linear-gradient(90deg,var(--accent), var(--accent2));
+  color:#032022;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.btn-primary:hover {transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
+.fade-in {opacity:0; transform: translateY(20px); transition: all 0.7s ease;}
+.fade-in.show {opacity:1; transform: translateY(0);}
+.plan-card {transition: transform 0.4s ease, box-shadow 0.4s ease;}
+.plan-card:hover {transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.2);}
+.nav-link:hover {color:var(--accent);}
+.theme-toggle {cursor:pointer; transition: transform 0.3s;}
+.theme-toggle:hover {transform: rotate(20deg);}
+</style>
+</head>
+<body class="dark bg-[color:var(--bg-dark)] text-[color:var(--text-dark)]">
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-white/5 light:border-black/10 bg-[color:var(--panel-dark)] dark:bg-[color:var(--panel-dark)] light:bg-[color:var(--panel-light)]">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#home" class="flex items-center gap-3">
+      <svg class="w-10 h-10" viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="48" stroke="url(#grad1)" stroke-width="4"/>
+        <path d="M30 55 Q50 20, 70 55 T90 55" stroke="url(#grad1)" stroke-width="4" fill="none"/>
+        <defs>
+          <linearGradient id="grad1" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0%" stop-color="#7de3d8"/>
+            <stop offset="100%" stop-color="#6fb4ff"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div>
+        <div class="text-lg font-semibold leading-none">Rivava</div>
+        <div class="text-xs text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Make It Simple.</div>
+      </div>
+    </a>
+    <nav class="hidden md:flex gap-6 text-sm">
+      <a href="#services" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Services</a>
+      <a href="#plans" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Plans</a>
+      <a href="#about" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">About</a>
+      <a href="#contact" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Contact</a>
+      <a href="https://wa.me/919999999999" class="px-4 py-2 rounded-md bg-white text-black text-sm hover:opacity-90">Book Free Call</a>
+      <span id="themeToggle" class="theme-toggle text-xl">🌓</span>
+    </nav>
+    <button id="hambBtn" class="md:hidden p-2 rounded border border-white/10" aria-label="menu">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-white/10 bg-[color:var(--panel-dark)] light:bg-[color:var(--panel-light)]">
+    <div class="px-6 py-4 flex flex-col gap-3 text-sm">
+      <a href="#services" class="block">Services</a>
+      <a href="#plans" class="block">Plans</a>
+      <a href="#about" class="block">About</a>
+      <a href="#contact" class="block">Contact</a>
+      <a href="https://wa.me/919999999999" class="block text-teal-300 font-medium">Book Free Call</a>
+      <span id="themeToggleMobile" class="theme-toggle text-lg">🌓 Toggle Theme</span>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<main id="home" class="min-h-screen flex items-center justify-center fade-in">
+  <section class="max-w-4xl px-6 text-center">
+    <h1 class="text-5xl md:text-6xl font-extrabold leading-tight">Make It Simple.</h1>
+    <p class="max-w-xl mx-auto text-lg md:text-xl mt-4 text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">
+      Your money. Clear. Controlled. Growing.
+    </p>
+    <div class="mt-8 flex flex-col sm:flex-row gap-3 items-center justify-center">
+      <a href="#contact" class="btn-primary px-6 py-3 rounded-full text-md font-medium">Get Your Free Plan</a>
+      <a href="#services" class="px-5 py-3 rounded-full border border-white/10 light:border-black/10 text-sm hover:text-white">Explore Services</a>
+    </div>
+  </section>
+</main>
+
+<!-- SERVICES -->
+<section id="services" class="max-w-6xl mx-auto px-6 py-20 fade-in">
+  <div class="text-center mb-10">
+    <h2 class="text-3xl font-semibold">Our Services</h2>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="p-6 rounded-2xl glass-panel hover:scale-[1.02] transition">
+      <svg class="w-12 h-12 text-[var(--accent)] mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h18v4H3zM8 7v14M16 7v14"/>
+      </svg>
+      <div class="font-semibold">Fund Manager</div>
+      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] mt-2">
+        Monthly personalised advice, mid-month check, and review meetings.
+      </div>
+    </div>
+    <div class="p-6 rounded-2xl glass-panel hover:scale-[1.02] transition">
+      <svg class="w-12 h-12 text-[var(--accent)] mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M3 3v18h18"/>
+        <path d="M18 17l-5-5-4 4-3-3"/>
+      </svg>
+      <div class="font-semibold">Expense Analysis</div>
+      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] mt-2">
+        Daily tracking, EMP model, and weekly summaries to optimize spending.
+      </div>
+    </div>
+    <div class="p-6 rounded-2xl glass-panel hover:scale-[1.02] transition">
+      <svg class="w-12 h-12 text-[var(--accent)] mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M12 1v22"/>
+        <path d="M17 5H9a5 5 0 00-5 5v4a5 5 0 005 5h8a5 5 0 005-5v-4a5 5 0 00-5-5z"/>
+      </svg>
+      <div class="font-semibold">CIBIL Boost</div>
+      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] mt-2">
+        Actionable steps to improve credit score and dispute support.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANS -->
+<section id="plans" class="max-w-6xl mx-auto px-6 py-20 fade-in">
+  <div class="text-center mb-10">
+    <h3 class="text-3xl font-semibold">Subscription Plans</h3>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="p-6 rounded-2xl glass-panel text-center plan-card">
+      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Starter</div>
+      <div class="text-3xl font-bold mt-2">₹99</div>
+      <button onclick="openCheckout('Starter')" class="mt-6 px-5 py-2 rounded-full btn-primary">Choose Plan</button>
+    </div>
+    <div class="p-6 rounded-2xl glass-panel text-center plan-card border-2 border-[var(--accent)]">
+      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Personal</div>
+      <div class="text-3xl font-bold mt-2">₹199</div>
+      <button onclick="openCheckout('Personal')" class="mt-6 px-5 py-2 rounded-full bg-white text-black">Choose Plan</button>
+    </div>
+    <div class="p-6 rounded-2xl glass-panel text-center plan-card">
+      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Pro</div>
+      <div class="text-3xl font-bold mt-2">₹599</div>
+      <button onclick="openCheckout('Pro')" class="mt-6 px-5 py-2 rounded-full btn-primary">Choose Plan</button>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="max-w-4xl mx-auto px-6 py-20 fade-in">
+  <form id="contactForm" action="https://formspree.io/f/your-form-id" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <input name="name" required placeholder="Full name" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10"/>
+    <input name="email" type="email" required placeholder="Email address" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10"/>
+    <input name="phone" required placeholder="Phone" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10"/>
+    <textarea name="message" placeholder="Your message" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10 md:col-span-2"></textarea>
+    <div class="md:col-span-2 flex items-center justify-between">
+      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">We respect your privacy.</div>
+      <button type="submit" class="px-6 py-3 rounded-full btn-primary">Request Call</button>
+    </div>
+  </form>
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t border-white/5 light:border-black/10 mt-12 text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] py-8 text-center">
+  © <span id="year"></span> Rivava
+</footer>
+
+<script>
+const root = document.documentElement;
+function setTheme(theme) {
+  document.body.classList.toggle('light', theme === 'light');
+  localStorage.setItem('theme', theme);
+}
+const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+setTheme(savedTheme);
+document.getElementById('themeToggle').onclick = () => setTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+document.getElementById('year').textContent = new Date().getFullYear();
+document.getElementById('hambBtn').onclick = () => document.getElementById('mobileMenu').classList.toggle('hidden');
+function openCheckout(plan){alert('You chose plan: '+plan);}
+document.getElementById('contactForm').onsubmit = e => {setTimeout(()=>alert('Thanks! Your request has been sent.'),300);}
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting) entry.target.classList.add('show');
+  });
+},{threshold:0.2});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
