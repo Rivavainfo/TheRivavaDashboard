@@ -1,215 +1,2063 @@
-<!doctype html>
-<html lang="en" class="transition-colors duration-500">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Rivava — Make It Simple.</title>
-<meta name="description" content="Rivava: Clear, controlled, and growing personal finances."/>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root {
-  --bg-dark: #060e1f;
-  --panel-dark: #0b1120;
-  --text-dark: #e6eef6;
-  --muted-dark: #9aa4b2;
-
-  --bg-light: #f5f7fa;
-  --panel-light: #ffffff;
-  --text-light: #0b1120;
-  --muted-light: #4b5563;
-
-  --accent: #7de3d8;
-  --accent2: #6fb4ff;
-}
-html, body {height:100%;}
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  -webkit-font-smoothing: antialiased;
-}
-.glass-panel {
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px);
-}
-.light .glass-panel {
-  background: rgba(255,255,255,0.7);
-  border: 1px solid rgba(0,0,0,0.06);
-}
-.btn-primary {
-  background: linear-gradient(90deg,var(--accent), var(--accent2));
-  color:#032022;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.btn-primary:hover {transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
-.fade-in {opacity:0; transform: translateY(20px); transition: all 0.7s ease;}
-.fade-in.show {opacity:1; transform: translateY(0);}
-.plan-card {transition: transform 0.4s ease, box-shadow 0.4s ease;}
-.plan-card:hover {transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.2);}
-.nav-link:hover {color:var(--accent);}
-.theme-toggle {cursor:pointer; transition: transform 0.3s;}
-.theme-toggle:hover {transform: rotate(20deg);}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Analytics Dashboard Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-turquoise: #40E0D0;
+            --primary-black: #000000;
+            --primary-white: #FFFFFF;
+            --dark-bg: #0f0f0f;
+            --dark-card: #1e1e1e;
+            --dark-text: #e0e0e0;
+            --light-gray: #f8f9fa;
+            --medium-gray: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        [data-theme="dark"] {
+            --primary-white: var(--dark-bg);
+            --light-gray: var(--dark-card);
+            --primary-black: var(--dark-text);
+            --border-color: #333333;
+            --medium-gray: #a0a0a0;
+            --glass-bg: rgba(0, 0, 0, 0.3);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-white);
+            color: var(--primary-black);
+            line-height: 1.6;
+            transition: var(--transition);
+            background-image: radial-gradient(circle at 20% 50%, rgba(64, 224, 208, 0.1) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 20%, rgba(103, 126, 234, 0.1) 0%, transparent 50%);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+            background: var(--glass-bg);
+            border-radius: 16px;
+            padding: 20px 30px;
+            border: 1px solid var(--glass-border);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.9rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-turquoise), #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .theme-toggle {
+            background: linear-gradient(135deg, var(--primary-turquoise), #36c9b8);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+        }
+        .theme-toggle:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+        /* Finance Health Score */
+        .health-score-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--glass-bg);
+            border-radius: 16px;
+            padding: 15px 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+        .health-score-circle {
+            position: relative;
+            width: 90px;
+            height: 90px;
+        }
+        .health-score-circle svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 8px rgba(64, 224, 208, 0.3));
+        }
+        .health-score-circle .bg-circle {
+            fill: none;
+            stroke: var(--border-color);
+            stroke-width: 6;
+        }
+        .health-score-circle .score-circle {
+            fill: none;
+            stroke: var(--primary-turquoise);
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 220;
+            stroke-dashoffset: 220;
+            transition: stroke-dashoffset 1.5s ease-out, stroke 0.5s ease;
+        }
+        .health-score-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .health-score-number {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary-turquoise);
+            line-height: 1;
+        }
+        .health-score-label {
+            font-size: 0.7rem;
+            color: var(--medium-gray);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        /* Data Source Section */
+        .data-source-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--glass-border);
+        }
+        .source-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: var(--light-gray);
+            padding: 8px;
+            border-radius: 16px;
+        }
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            color: var(--primary-black);
+            flex: 1;
+            text-align: center;
+        }
+        .tab-button.active {
+            background: var(--primary-turquoise);
+            color: white;
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(64, 224, 208, 0.4);
+        }
+        .file-upload {
+            border: 3px dashed var(--primary-turquoise);
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            background: var(--primary-white);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .file-upload:hover {
+            background: rgba(64, 224, 208, 0.05);
+            transform: scale(1.02);
+            border-color: #36c9b8;
+        }
+        .btn {
+            background: linear-gradient(135deg, var(--primary-turquoise), #36c9b8);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 14px;
+            margin: 8px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+        .dashboard.active {
+            display: block;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 25px 30px;
+            border: 1px solid var(--glass-border);
+        }
+        /* Controls Section */
+        .controls-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--glass-border);
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            align-items: end;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .control-label {
+            font-weight: 600;
+            color: var(--primary-black);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .control-input {
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--primary-white);
+            color: var(--primary-black);
+            font-size: 14px;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        .control-input:focus {
+            outline: none;
+            border-color: var(--primary-turquoise);
+            box-shadow: 0 0 0 4px rgba(64, 224, 208, 0.1);
+        }
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .kpi-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            border: 1px solid var(--glass-border);
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-turquoise), #667eea);
+        }
+        .kpi-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+        .kpi-title {
+            color: var(--medium-gray);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-turquoise), #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .kpi-change {
+            font-size: 0.9rem;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        .kpi-change.positive {
+            color: var(--success-color);
+        }
+        .kpi-change.negative {
+            color: var(--danger-color);
+        }
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .chart-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            border: 1px solid var(--glass-border);
+        }
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--primary-black);
+            text-align: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 320px;
+        }
+        /* AI Insights */
+        .ai-insights-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--glass-border);
+        }
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        .insight-card {
+            background: var(--primary-white);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--glass-border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-turquoise), #667eea);
+        }
+        .insight-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        .insight-type {
+            font-weight: 700;
+            color: var(--primary-turquoise);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .insight-text {
+            color: var(--primary-black);
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        /* Data Table */
+        .table-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .search-box {
+            padding: 12px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            width: 320px;
+            max-width: 100%;
+            background: var(--primary-white);
+            color: var(--primary-black);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary-turquoise);
+            box-shadow: 0 0 0 4px rgba(64, 224, 208, 0.1);
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background: linear-gradient(135deg, var(--primary-turquoise), #36c9b8);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+        }
+        th:hover {
+            background: linear-gradient(135deg, #36c9b8, #2bb5a3);
+        }
+        th .sort-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.8;
+        }
+        tr:hover {
+            background: rgba(64, 224, 208, 0.08);
+        }
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+        .editable-cell:hover {
+            background: rgba(64, 224, 208, 0.15);
+            border-radius: 8px;
+        }
+        .editable-cell.editing input {
+            background: var(--primary-white);
+            border: 2px solid var(--primary-turquoise);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: 100%;
+            font-weight: 600;
+        }
+        /* Progress Bar */
+        .progress-container {
+            background: var(--border-color);
+            border-radius: 12px;
+            height: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-turquoise), #667eea);
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        /* Message styles */
+        .message {
+            padding: 18px 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .warning-message {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        }
+        .loading-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid var(--border-color);
+            border-top: 6px solid var(--primary-turquoise);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+                padding: 20px;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            .source-tabs {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(64, 224, 208, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(64, 224, 208, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(64, 224, 208, 0); }
+        }
+    </style>
 </head>
-<body class="dark bg-[color:var(--bg-dark)] text-[color:var(--text-dark)]">
-
-<!-- HEADER -->
-<header class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-white/5 light:border-black/10 bg-[color:var(--panel-dark)] dark:bg-[color:var(--panel-dark)] light:bg-[color:var(--panel-light)]">
-  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="#home" class="flex items-center gap-3">
-      <svg class="w-10 h-10" viewBox="0 0 100 100" fill="none">
-        <circle cx="50" cy="50" r="48" stroke="url(#grad1)" stroke-width="4"/>
-        <path d="M30 55 Q50 20, 70 55 T90 55" stroke="url(#grad1)" stroke-width="4" fill="none"/>
-        <defs>
-          <linearGradient id="grad1" x1="0" y1="0" x2="100" y2="100">
-            <stop offset="0%" stop-color="#7de3d8"/>
-            <stop offset="100%" stop-color="#6fb4ff"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <div>
-        <div class="text-lg font-semibold leading-none">Rivava</div>
-        <div class="text-xs text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Make It Simple.</div>
-      </div>
-    </a>
-    <nav class="hidden md:flex gap-6 text-sm">
-      <a href="#services" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Services</a>
-      <a href="#plans" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Plans</a>
-      <a href="#about" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">About</a>
-      <a href="#contact" class="nav-link text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Contact</a>
-      <a href="https://wa.me/919999999999" class="px-4 py-2 rounded-md bg-white text-black text-sm hover:opacity-90">Book Free Call</a>
-      <span id="themeToggle" class="theme-toggle text-xl">🌓</span>
-    </nav>
-    <button id="hambBtn" class="md:hidden p-2 rounded border border-white/10" aria-label="menu">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="1.8" stroke-linecap="round"/></svg>
-    </button>
-  </div>
-  <div id="mobileMenu" class="hidden md:hidden border-t border-white/10 bg-[color:var(--panel-dark)] light:bg-[color:var(--panel-light)]">
-    <div class="px-6 py-4 flex flex-col gap-3 text-sm">
-      <a href="#services" class="block">Services</a>
-      <a href="#plans" class="block">Plans</a>
-      <a href="#about" class="block">About</a>
-      <a href="#contact" class="block">Contact</a>
-      <a href="https://wa.me/919999999999" class="block text-teal-300 font-medium">Book Free Call</a>
-      <span id="themeToggleMobile" class="theme-toggle text-lg">🌓 Toggle Theme</span>
+<body data-theme="light">
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 20px; color: var(--primary-black); font-weight: 600;">Generating PDF Report...</p>
+        </div>
     </div>
-  </div>
-</header>
-
-<!-- HERO -->
-<main id="home" class="min-h-screen flex items-center justify-center fade-in">
-  <section class="max-w-4xl px-6 text-center">
-    <h1 class="text-5xl md:text-6xl font-extrabold leading-tight">Make It Simple.</h1>
-    <p class="max-w-xl mx-auto text-lg md:text-xl mt-4 text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">
-      Your money. Clear. Controlled. Growing.
-    </p>
-    <div class="mt-8 flex flex-col sm:flex-row gap-3 items-center justify-center">
-      <a href="#contact" class="btn-primary px-6 py-3 rounded-full text-md font-medium">Get Your Free Plan</a>
-      <a href="#services" class="px-5 py-3 rounded-full border border-white/10 light:border-black/10 text-sm hover:text-white">Explore Services</a>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                Finance Analytics Dashboard Pro
+            </div>
+            <div class="header-controls">
+                <div class="health-score-container" id="healthScoreContainer" style="display: none;">
+                    <div class="health-score-circle">
+                        <svg viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="35" class="bg-circle"></circle>
+                            <circle cx="40" cy="40" r="35" class="score-circle" id="scoreCircle"></circle>
+                        </svg>
+                        <div class="health-score-text">
+                            <div class="health-score-number" id="healthScoreNumber">0</div>
+                            <div class="health-score-label">Score</div>
+                        </div>
+                    </div>
+                    <div class="health-score-info">
+                        <div class="health-score-title">Gemini Health Score</div>
+                        <div class="health-score-status" id="healthScoreStatus">Calculating...</div>
+                    </div>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i> Dark Mode
+                </button>
+            </div>
+        </header>
+        <section class="data-source-section" id="dataSourceSection">
+            <h2 style="margin-bottom: 25px; color: var(--primary-black); font-weight: 700; font-size: 1.6rem;">Choose Your Finance Data Source</h2>
+            <div class="source-tabs">
+                <button class="tab-button active" onclick="switchTab('csv', this)">
+                    <i class="fas fa-file-csv"></i> Upload CSV
+                </button>
+                <button class="tab-button" onclick="switchTab('firebase', this)">
+                    <i class="fas fa-cloud"></i> Firebase Firestore
+                </button>
+                <button class="tab-button" onclick="switchTab('test', this)">
+                    <i class="fas fa-flask"></i> Sample Data
+                </button>
+            </div>
+            <div class="tab-content active" id="csvTab">
+                <div class="file-upload" id="fileUpload" onclick="document.getElementById('csvFile').click()">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 3.5rem; color: var(--primary-turquoise); margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 10px; font-weight: 700;">Drop your finance CSV file here or click to browse</h3>
+                    <p style="color: var(--medium-gray); margin-top: 15px; font-weight: 500;">Supports files up to 10MB • Expected fields: Earning, Expenses, Category, Date, Email ID</p> <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="handleCSVUpload(event)">
+                </div>
+                <div class="progress-container" id="csvProgress">
+                    <div class="progress-bar" id="csvProgressBar"></div>
+                </div>
+                <div id="messageContainer" style="margin-top: 20px;"></div>
+            </div>
+            <div class="tab-content" id="firebaseTab">
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <div style="background: var(--primary-white); border-radius: 20px; padding: 40px; box-shadow: var(--shadow-lg); border: 1px solid var(--glass-border);">
+                        <h3 style="margin-bottom: 30px; color: var(--primary-black); text-align: center; font-weight: 700; font-size: 1.4rem;">
+                            <i class="fas fa-database" style="color: var(--primary-turquoise); margin-right: 10px;"></i>
+                            Connect to Firebase Firestore
+                        </h3>
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: 600; color: var(--primary-black);">
+                                Firebase Project ID <span style="color: var(--danger-color);">*</span>
+                            </label>
+                            <input type="text" id="firebaseProjectId" placeholder="your-project-id" 
+                                   style="width: 100%; padding: 14px 18px; border: 2px solid var(--border-color); border-radius: 12px; background: var(--primary-white); color: var(--primary-black); font-size: 14px; font-weight: 500; transition: var(--transition);">
+                        </div>
+                        <div style="margin-bottom: 30px;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: 600; color: var(--primary-black);">
+                                Collection Name <span style="color: var(--danger-color);">*</span>
+                            </label>
+                            <input type="text" id="firestoreCollection" placeholder="transactions, finances, records..." 
+                                   style="width: 100%; padding: 14px 18px; border: 2px solid var(--border-color); border-radius: 12px; background: var(--primary-white); color: var(--primary-black); font-size: 14px; font-weight: 500; transition: var(--transition);">
+                        </div>
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <button class="btn" onclick="connectToFirestore()" style="padding: 18px 35px; font-size: 16px; font-weight: 700;">
+                                <i class="fas fa-plug"></i> Connect to Firestore
+                            </button>
+                        </div>
+                        <div class="progress-container" id="firebaseProgress">
+                            <div class="progress-bar" id="firebaseProgressBar"></div>
+                        </div>
+                        <div style="background: rgba(64, 224, 208, 0.1); border-radius: 12px; padding: 20px; margin-top: 25px; border: 1px solid rgba(64, 224, 208, 0.2);">
+                            <p style="color: var(--medium-gray); font-size: 14px; margin: 0; line-height: 1.6; font-weight: 500;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-turquoise); margin-right: 8px;"></i>
+                                <strong>Note:</strong> Connect to any Firebase project with finance data. 
+                                Expected fields: Earning, Expenses, Category, Date, Email ID, etc. </p>
+                        </div>
+                        <div id="firebaseMessageContainer" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-content" id="testTab">
+                <div style="text-align: center; padding: 50px;">
+                    <h3 style="margin-bottom: 30px; color: var(--primary-black); font-weight: 700; font-size: 1.3rem;">Load Sample Finance Data</h3>
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn" onclick="loadPersonalFinanceData()">
+                            <i class="fas fa-wallet"></i> Personal Finance Sample
+                        </button>
+                        <button class="btn" onclick="loadBusinessFinanceData()">
+                            <i class="fas fa-building"></i> Business Finance Sample
+                        </button>
+                        <button class="btn" onclick="loadInvestmentData()">
+                            <i class="fas fa-chart-line"></i> Investment Portfolio Sample
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="dashboard" id="dashboard">
+            <div class="dashboard-header">
+                <h2 style="color: var(--primary-black); font-weight: 700; font-size: 1.8rem;">Finance Analytics Dashboard</h2>
+                <div class="export-controls">
+                    <button class="btn" onclick="exportDashboardScreenshot()">
+                        <i class="fas fa-camera"></i> Export Screenshot PDF
+                    </button>
+                    <button class="btn" onclick="exportToCSV()">
+                        <i class="fas fa-file-csv"></i> Export Data CSV
+                    </button>
+                </div>
+            </div>
+            <div class="controls-section" id="controlsSection">
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label class="control-label">Filter by User</label>
+                        <select class="control-input" id="userFilter" onchange="applyFilters()">
+                            <option value="">All Users</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Filter by Category</label>
+                        <select class="control-input" id="categoryFilter" onchange="applyFilters()">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Transaction Type</label>
+                        <select class="control-input" id="typeFilter" onchange="applyFilters()">
+                            <option value="">All Types</option>
+                            <option value="earning">Earning</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Filter by Email ID</label>
+                        <select class="control-input" id="emailIdFilter" onchange="applyFilters()">
+                            <option value="">All Email IDs</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Date From</label>
+                        <input type="date" class="control-input" id="dateFromFilter" onchange="applyFilters()">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Date To</label>
+                        <input type="date" class="control-input" id="dateToFilter" onchange="applyFilters()">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Sort by</label>
+                        <select class="control-input" id="sortBy" onchange="applyFilters()">
+                            <option value="date">Date</option>
+                            <option value="amount">Amount</option>
+                            <option value="category">Category</option>
+                            <option value="emailId">Email ID</option> </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Sort Order</label>
+                        <select class="control-input" id="sortOrder" onchange="applyFilters()">
+                            <option value="desc">Descending</option>
+                            <option value="asc">Ascending</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-grid" id="kpiGrid">
+                </div>
+            <div class="ai-insights-section" id="aiInsightsSection">
+                <h3 style="color: var(--primary-black); margin-bottom: 15px; font-weight: 700; font-size: 1.4rem;">
+                    <i class="fas fa-robot" style="color: var(--primary-turquoise); margin-right: 10px;"></i>
+                    Gemini Financial Insights
+                </h3>
+                <div class="insights-grid" id="insightsGrid">
+                    </div>
+            </div>
+            <div class="charts-grid" id="chartsGrid">
+                </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 style="color: var(--primary-black); font-weight: 700; font-size: 1.3rem;">Finance Data</h3>
+                    <input type="text" class="search-box" placeholder="Search transactions..." id="searchBox" oninput="filterTable()">
+                </div>
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </div>
-  </section>
-</main>
-
-<!-- SERVICES -->
-<section id="services" class="max-w-6xl mx-auto px-6 py-20 fade-in">
-  <div class="text-center mb-10">
-    <h2 class="text-3xl font-semibold">Our Services</h2>
-  </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div class="p-6 rounded-2xl glass-panel hover:scale-[1.02] transition">
-      <svg class="w-12 h-12 text-[var(--accent)] mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 3h18v4H3zM8 7v14M16 7v14"/>
-      </svg>
-      <div class="font-semibold">Fund Manager</div>
-      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] mt-2">
-        Monthly personalised advice, mid-month check, and review meetings.
-      </div>
-    </div>
-    <div class="p-6 rounded-2xl glass-panel hover:scale-[1.02] transition">
-      <svg class="w-12 h-12 text-[var(--accent)] mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M3 3v18h18"/>
-        <path d="M18 17l-5-5-4 4-3-3"/>
-      </svg>
-      <div class="font-semibold">Expense Analysis</div>
-      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] mt-2">
-        Daily tracking, EMP model, and weekly summaries to optimize spending.
-      </div>
-    </div>
-    <div class="p-6 rounded-2xl glass-panel hover:scale-[1.02] transition">
-      <svg class="w-12 h-12 text-[var(--accent)] mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M12 1v22"/>
-        <path d="M17 5H9a5 5 0 00-5 5v4a5 5 0 005 5h8a5 5 0 005-5v-4a5 5 0 00-5-5z"/>
-      </svg>
-      <div class="font-semibold">CIBIL Boost</div>
-      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] mt-2">
-        Actionable steps to improve credit score and dispute support.
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PLANS -->
-<section id="plans" class="max-w-6xl mx-auto px-6 py-20 fade-in">
-  <div class="text-center mb-10">
-    <h3 class="text-3xl font-semibold">Subscription Plans</h3>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="p-6 rounded-2xl glass-panel text-center plan-card">
-      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Starter</div>
-      <div class="text-3xl font-bold mt-2">₹99</div>
-      <button onclick="openCheckout('Starter')" class="mt-6 px-5 py-2 rounded-full btn-primary">Choose Plan</button>
-    </div>
-    <div class="p-6 rounded-2xl glass-panel text-center plan-card border-2 border-[var(--accent)]">
-      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Personal</div>
-      <div class="text-3xl font-bold mt-2">₹199</div>
-      <button onclick="openCheckout('Personal')" class="mt-6 px-5 py-2 rounded-full bg-white text-black">Choose Plan</button>
-    </div>
-    <div class="p-6 rounded-2xl glass-panel text-center plan-card">
-      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">Pro</div>
-      <div class="text-3xl font-bold mt-2">₹599</div>
-      <button onclick="openCheckout('Pro')" class="mt-6 px-5 py-2 rounded-full btn-primary">Choose Plan</button>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section id="contact" class="max-w-4xl mx-auto px-6 py-20 fade-in">
-  <form id="contactForm" action="https://formspree.io/f/your-form-id" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <input name="name" required placeholder="Full name" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10"/>
-    <input name="email" type="email" required placeholder="Email address" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10"/>
-    <input name="phone" required placeholder="Phone" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10"/>
-    <textarea name="message" placeholder="Your message" class="p-3 rounded bg-transparent border border-white/10 light:border-black/10 md:col-span-2"></textarea>
-    <div class="md:col-span-2 flex items-center justify-between">
-      <div class="text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)]">We respect your privacy.</div>
-      <button type="submit" class="px-6 py-3 rounded-full btn-primary">Request Call</button>
-    </div>
-  </form>
-</section>
-
-<!-- FOOTER -->
-<footer class="border-t border-white/5 light:border-black/10 mt-12 text-sm text-[color:var(--muted-dark)] light:text-[color:var(--muted-light)] py-8 text-center">
-  © <span id="year"></span> Rivava
-</footer>
-
-<script>
-const root = document.documentElement;
-function setTheme(theme) {
-  document.body.classList.toggle('light', theme === 'light');
-  localStorage.setItem('theme', theme);
-}
-const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-setTheme(savedTheme);
-document.getElementById('themeToggle').onclick = () => setTheme(document.body.classList.contains('light') ? 'dark' : 'light');
-document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light') ? 'dark' : 'light');
-document.getElementById('year').textContent = new Date().getFullYear();
-document.getElementById('hambBtn').onclick = () => document.getElementById('mobileMenu').classList.toggle('hidden');
-function openCheckout(plan){alert('You chose plan: '+plan);}
-document.getElementById('contactForm').onsubmit = e => {setTimeout(()=>alert('Thanks! Your request has been sent.'),300);}
-const observer = new IntersectionObserver(entries=>{
-  entries.forEach(entry=>{
-    if(entry.isIntersecting) entry.target.classList.add('show');
-  });
-},{threshold:0.2});
-document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
-</script>
+    <script>
+        // Global variables
+        let currentData = [];
+        let originalData = [];
+        let filteredData = [];
+        let charts = {};
+        let isDarkMode = false;
+        let firebaseApp = null;
+        let firestoreDb = null;
+        let editingCell = null;
+        // Theme toggle
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (isDarkMode) {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+            }
+        }
+        // Tab switching
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+        // CSV upload handler
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showMessage('Please select a valid CSV file.', 'error');
+                return;
+            }
+            showProgress('csvProgress', 'csvProgressBar');
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    hideProgress('csvProgress');
+                    if (results.errors.length > 0) {
+                        console.warn('CSV parsing warnings:', results.errors);
+                    }
+                    if (results.data.length === 0) {
+                        showMessage('CSV file is empty. Loading placeholder data for demo.', 'warning');
+                        loadPersonalFinanceData();
+                        return;
+                    }
+                    originalData = results.data;
+                    processFinanceData();
+                    showMessage(`Successfully loaded ${currentData.length} finance records from CSV.`, 'success');
+                    setTimeout(() => {
+                        generateDashboard();
+                    }, 1000);
+                },
+                error: function(error) {
+                    hideProgress('csvProgress');
+                    showMessage(`Error parsing CSV: ${error.message}`, 'error');
+                }
+            });
+        }
+        // Enhanced Firebase Firestore connection with category-based earning/expense fetching and emailId
+        async function connectToFirestore() {
+            const projectId = document.getElementById('firebaseProjectId').value.trim();
+            const collectionName = document.getElementById('firestoreCollection').value.trim();
+            if (!projectId || !collectionName) {
+                showFirebaseMessage('Please enter both Project ID and Collection Name.', 'error');
+                return;
+            }
+            try {
+                showProgress('firebaseProgress', 'firebaseProgressBar');
+                showFirebaseMessage('Connecting to Firebase Firestore...', 'warning');
+                const firebaseConfig = {
+                    projectId: projectId,
+                    apiKey: "dummy-key",
+                    authDomain: `${projectId}.firebaseapp.com`,
+                    databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`,
+                    storageBucket: `${projectId}.appspot.com`
+                };
+                if (firebaseApp) {
+                    try {
+                        firebaseApp.delete();
+                    } catch (e) {
+                        console.log('Previous app cleanup:', e.message);
+                    }
+                }
+                firebaseApp = firebase.initializeApp(firebaseConfig, `app-${Date.now()}`);
+                firestoreDb = firebaseApp.firestore();
+                const collectionRef = firestoreDb.collection(collectionName);
+                const snapshot = await collectionRef.limit(1000).get();
+                if (snapshot.empty) {
+                    hideProgress('firebaseProgress');
+                    showFirebaseMessage(`Collection '${collectionName}' is empty or doesn't exist.`, 'error');
+                    return;
+                }
+                const firestoreData = [];
+                // Define earning and expense categories
+                const earningCategories = ['salary', 'freelance', 'bonus', 'investment', 'dividend', 'rental', 'business', 'commission', 'gift', 'refund'];
+                const expenseCategories = ['rent', 'utilities', 'groceries', 'transportation', 'entertainment', 'shopping', 'insurance', 'healthcare', 'education', 'travel', 'maintenance', 'fees', 'charity', 'tax'];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    data._documentId = doc.id;
+                    // Handle nested transactions array
+                    if (data.transactions && Array.isArray(data.transactions)) {
+                        data.transactions.forEach(transaction => {
+                            const transObj = processFirebaseTransaction(transaction, data, doc.id, earningCategories, expenseCategories);
+                            firestoreData.push(transObj);
+                        });
+                    } else {
+                        // Process top-level document
+                        const transObj = processFirebaseTransaction(data, data, doc.id, earningCategories, expenseCategories);
+                        firestoreData.push(transObj);
+                    }
+                });
+                hideProgress('firebaseProgress');
+                if (firestoreData.length === 0) {
+                    showFirebaseMessage('No data found in the collection.', 'error');
+                    return;
+                }
+                originalData = firestoreData;
+                processFinanceData();
+                showFirebaseMessage(
+                    `Successfully connected! Loaded ${currentData.length} documents from '${collectionName}' collection.`, 
+                    'success'
+                );
+                setTimeout(() => {
+                    generateDashboard();
+                }, 1500);
+            } catch (error) {
+                hideProgress('firebaseProgress');
+                console.error('Firebase connection error:', error);
+                let errorMessage = 'Failed to connect to Firestore. ';
+                if (error.code === 'permission-denied') {
+                    errorMessage += 'Permission denied. Make sure the Firestore database allows public read access.';
+                } else if (error.code === 'not-found') {
+                    errorMessage += 'Project or collection not found. Please check your Project ID and Collection Name.';
+                } else if (error.message.includes('network')) {
+                    errorMessage += 'Network error. Please check your internet connection.';
+                } else {
+                    errorMessage += error.message || 'Unknown error occurred.';
+                }
+                showFirebaseMessage(errorMessage, 'error');
+            }
+        }
+        // Process Firebase transaction and categorize as earning or expense, including emailId
+        function processFirebaseTransaction(transaction, parentData, docId, earningCategories, expenseCategories) {
+            const transObj = { ...transaction };
+            transObj._documentId = docId;
+            transObj.documentId = docId;
+            transObj.userName = parentData.userName || parentData.username || parentData.user || 'Unknown User';
+            // Ensure Email ID field (from parent or transaction) - Prioritize userEmail
+            transObj.emailId = parentData.userEmail || transObj.userEmail || transObj.emailId || transObj.EmailID || transObj.email || parentData.emailId || parentData.EmailID || parentData.email || 'N/A';
+            // Get category and normalize it
+            const category = (transObj.Category || transObj.category || 'uncategorized').toLowerCase();
+            const amount = parseFloat(transObj.Amount || transObj.amount || transObj.Value || transObj.value || 0);
+            // Determine if it's an earning or expense based on the 'type' field primarily
+            const type = (transObj.type || transObj.Type || '').toLowerCase();
+            if (type === 'earning') {
+                transObj.Earning = Math.abs(amount);
+                transObj.Expenses = 0;
+                transObj.Type = 'Earning';
+            } else if (type === 'expense') {
+                transObj.Earning = 0;
+                transObj.Expenses = Math.abs(amount);
+                transObj.Type = 'Expense';
+            } else {
+                // Fallback logic based on amount or predefined categories if 'type' is missing/invalid
+                if (earningCategories.includes(category) || amount > 0) {
+                    transObj.Earning = Math.abs(amount);
+                    transObj.Expenses = 0;
+                    transObj.Type = 'Earning';
+                } else if (expenseCategories.includes(category) || amount < 0) {
+                    transObj.Earning = 0;
+                    transObj.Expenses = Math.abs(amount);
+                    transObj.Type = 'Expense';
+                } else {
+                    // Default logic: positive amounts are earnings, negative are expenses
+                    if (amount >= 0) {
+                        transObj.Earning = amount;
+                        transObj.Expenses = 0;
+                        transObj.Type = 'Earning';
+                    } else {
+                        transObj.Earning = 0;
+                        transObj.Expenses = Math.abs(amount);
+                        transObj.Type = 'Expense';
+                    }
+                }
+            }
+            // Ensure Category field (capitalize first letter)
+            transObj.Category = category.charAt(0).toUpperCase() + category.slice(1);
+            // Ensure Date field
+            transObj.Date = transObj.Date || transObj.date || new Date().toISOString().split('T')[0];
+            return transObj;
+        }
+        // Sample data functions (updated with Earning instead of Income and added emailId)
+        function loadPersonalFinanceData() {
+            const personalFinanceData = [
+                { Date: '2024-01-01', Category: 'Salary', Type: 'Earning', Earning: 5000, Expenses: 0, userName: 'John Doe', emailId: 'john.doe@example.com' },
+                { Date: '2024-01-02', Category: 'Freelance', Type: 'Earning', Earning: 1200, Expenses: 0, userName: 'John Doe', emailId: 'john.doe@example.com' },
+                { Date: '2024-01-03', Category: 'Rent', Type: 'Expense', Earning: 0, Expenses: 1800, userName: 'John Doe', emailId: 'john.doe@example.com' },
+                { Date: '2024-01-04', Category: 'Utilities', Type: 'Expense', Earning: 0, Expenses: 250, userName: 'John Doe', emailId: 'john.doe@example.com' },
+                { Date: '2024-01-05', Category: 'Groceries', Type: 'Expense', Earning: 0, Expenses: 400, userName: 'Jane Smith', emailId: 'jane.smith@example.com' },
+                { Date: '2024-01-06', Category: 'Transportation', Type: 'Expense', Earning: 0, Expenses: 150, userName: 'Jane Smith', emailId: 'jane.smith@example.com' },
+                { Date: '2024-01-07', Category: 'Entertainment', Type: 'Expense', Earning: 0, Expenses: 200, userName: 'Jane Smith', emailId: 'jane.smith@example.com' },
+                { Date: '2024-01-08', Category: 'Shopping', Type: 'Expense', Earning: 0, Expenses: 300, userName: 'Bob Johnson', emailId: 'bob.johnson@example.com' },
+                { Date: '2024-01-10', Category: 'Investment', Type: 'Earning', Earning: 300, Expenses: 0, userName: 'Bob Johnson', emailId: 'bob.johnson@example.com' },
+                { Date: '2024-01-12', Category: 'Insurance', Type: 'Expense', Earning: 0, Expenses: 180, userName: 'Bob Johnson', emailId: 'bob.johnson@example.com' },
+                { Date: '2024-01-15', Category: 'Bonus', Type: 'Earning', Earning: 1500, Expenses: 0, userName: 'Alice Brown', emailId: 'alice.brown@example.com' },
+                { Date: '2024-01-18', Category: 'Healthcare', Type: 'Expense', Earning: 0, Expenses: 120, userName: 'Alice Brown', emailId: 'alice.brown@example.com' },
+                { Date: '2024-01-20', Category: 'Education', Type: 'Expense', Earning: 0, Expenses: 200, userName: 'Alice Brown', emailId: 'alice.brown@example.com' },
+                { Date: '2024-01-22', Category: 'Gift', Type: 'Earning', Earning: 500, Expenses: 0, userName: 'Charlie Wilson', emailId: 'charlie.wilson@example.com' },
+                { Date: '2024-01-25', Category: 'Charity', Type: 'Expense', Earning: 0, Expenses: 100, userName: 'Charlie Wilson', emailId: 'charlie.wilson@example.com' }
+            ];
+            originalData = personalFinanceData;
+            processFinanceData();
+            showMessage(`Successfully loaded ${currentData.length} personal finance records.`, 'success');
+            setTimeout(() => {
+                generateDashboard();
+            }, 1000);
+        }
+        function loadBusinessFinanceData() {
+            const businessFinanceData = [
+                { Date: '2024-01-01', Category: 'Sales', Type: 'Earning', Earning: 25000, Expenses: 0, userName: 'TechCorp', emailId: 'finance@techcorp.com' },
+                { Date: '2024-01-02', Category: 'Services', Type: 'Earning', Earning: 15000, Expenses: 0, userName: 'TechCorp', emailId: 'finance@techcorp.com' },
+                { Date: '2024-01-03', Category: 'Rent', Type: 'Expense', Earning: 0, Expenses: 3000, userName: 'TechCorp', emailId: 'finance@techcorp.com' },
+                { Date: '2024-01-04', Category: 'Salaries', Type: 'Expense', Earning: 0, Expenses: 18000, userName: 'InnovateLLC', emailId: 'accounts@innovatellc.com' },
+                { Date: '2024-01-05', Category: 'Marketing', Type: 'Expense', Earning: 0, Expenses: 2500, userName: 'InnovateLLC', emailId: 'accounts@innovatellc.com' },
+                { Date: '2024-01-06', Category: 'Equipment', Type: 'Expense', Earning: 0, Expenses: 4000, userName: 'InnovateLLC', emailId: 'accounts@innovatellc.com' },
+                { Date: '2024-01-08', Category: 'Licensing', Type: 'Earning', Earning: 8000, Expenses: 0, userName: 'GlobalSolutions', emailId: 'billing@globalsolutions.com' },
+                { Date: '2024-01-10', Category: 'Utilities', Type: 'Expense', Earning: 0, Expenses: 800, userName: 'GlobalSolutions', emailId: 'billing@globalsolutions.com' },
+                { Date: '2024-01-12', Category: 'Travel', Type: 'Expense', Earning: 0, Expenses: 1200, userName: 'GlobalSolutions', emailId: 'billing@globalsolutions.com' },
+                { Date: '2024-01-15', Category: 'Investment', Type: 'Earning', Earning: 12000, Expenses: 0, userName: 'StartUpXYZ', emailId: 'investments@startupxyz.com' },
+                { Date: '2024-01-18', Category: 'Insurance', Type: 'Expense', Earning: 0, Expenses: 600, userName: 'StartUpXYZ', emailId: 'investments@startupxyz.com' },
+                { Date: '2024-01-20', Category: 'Legal', Type: 'Expense', Earning: 0, Expenses: 1500, userName: 'StartUpXYZ', emailId: 'investments@startupxyz.com' },
+                { Date: '2024-01-22', Category: 'Maintenance', Type: 'Expense', Earning: 0, Expenses: 400, userName: 'EnterpriseABC', emailId: 'admin@enterpriseabc.com' },
+                { Date: '2024-01-25', Category: 'Training', Type: 'Expense', Earning: 0, Expenses: 800, userName: 'EnterpriseABC', emailId: 'admin@enterpriseabc.com' }
+            ];
+            originalData = businessFinanceData;
+            processFinanceData();
+            showMessage(`Successfully loaded ${currentData.length} business finance records.`, 'success');
+            setTimeout(() => {
+                generateDashboard();
+            }, 1000);
+        }
+        function loadInvestmentData() {
+            const investmentData = [
+                { Date: '2024-01-01', Category: 'Dividend', Type: 'Earning', Earning: 1200, Expenses: 0, userName: 'Investor1', emailId: 'investor1@example.com' },
+                { Date: '2024-01-02', Category: 'Investment', Type: 'Expense', Earning: 0, Expenses: 5000, userName: 'Investor1', emailId: 'investor1@example.com' },
+                { Date: '2024-01-03', Category: 'Interest', Type: 'Earning', Earning: 800, Expenses: 0, userName: 'Investor1', emailId: 'investor1@example.com' },
+                { Date: '2024-01-05', Category: 'Rental', Type: 'Earning', Earning: 2500, Expenses: 0, userName: 'Investor2', emailId: 'investor2@example.com' },
+                { Date: '2024-01-08', Category: 'Investment', Type: 'Expense', Earning: 0, Expenses: 3000, userName: 'Investor2', emailId: 'investor2@example.com' },
+                { Date: '2024-01-10', Category: 'Trading', Type: 'Earning', Earning: 3500, Expenses: 0, userName: 'Investor2', emailId: 'investor2@example.com' },
+                { Date: '2024-01-12', Category: 'Investment', Type: 'Expense', Earning: 0, Expenses: 2000, userName: 'Trader3', emailId: 'trader3@example.com' },
+                { Date: '2024-01-15', Category: 'Trading', Type: 'Earning', Earning: 4000, Expenses: 0, userName: 'Trader3', emailId: 'trader3@example.com' },
+                { Date: '2024-01-18', Category: 'Maintenance', Type: 'Expense', Earning: 0, Expenses: 800, userName: 'Trader3', emailId: 'trader3@example.com' },
+                { Date: '2024-01-20', Category: 'Investment', Type: 'Expense', Earning: 0, Expenses: 10000, userName: 'PortfolioManager', emailId: 'manager@portfolio.com' },
+                { Date: '2024-01-22', Category: 'Dividend', Type: 'Earning', Earning: 600, Expenses: 0, userName: 'PortfolioManager', emailId: 'manager@portfolio.com' },
+                { Date: '2024-01-25', Category: 'Fees', Type: 'Expense', Earning: 0, Expenses: 150, userName: 'PortfolioManager', emailId: 'manager@portfolio.com' },
+                { Date: '2024-01-28', Category: 'Investment', Type: 'Expense', Earning: 0, Expenses: 2500, userName: 'CommodityTrader', emailId: 'commodity@trader.com' }
+            ];
+            originalData = investmentData;
+            processFinanceData();
+            showMessage(`Successfully loaded ${currentData.length} investment portfolio records.`, 'success');
+            setTimeout(() => {
+                generateDashboard();
+            }, 1000);
+        }
+        // Process and normalize finance data (updated for Earning and emailId)
+        function processFinanceData() {
+            currentData = originalData.map(row => {
+                const normalizedRow = { ...row };
+                // Handle different field name variations for earning
+                const amountField = normalizedRow.Amount || normalizedRow.amount || normalizedRow.Value || normalizedRow.value;
+                const earningField = normalizedRow.Earning || normalizedRow.earning || normalizedRow.Income || normalizedRow.income || normalizedRow.Revenue || normalizedRow.revenue;
+                const expenseField = normalizedRow.Expenses || normalizedRow.expenses || normalizedRow.Expense || normalizedRow.expense;
+                // Set standard fields
+                if (!normalizedRow.Earning && !normalizedRow.Expenses && amountField !== undefined) {
+                    if (amountField > 0) {
+                        normalizedRow.Earning = amountField;
+                        normalizedRow.Expenses = 0;
+                        normalizedRow.Type = 'Earning';
+                    } else {
+                        normalizedRow.Earning = 0;
+                        normalizedRow.Expenses = Math.abs(amountField);
+                        normalizedRow.Type = 'Expense';
+                    }
+                } else {
+                    normalizedRow.Earning = parseFloat(earningField) || 0;
+                    normalizedRow.Expenses = parseFloat(expenseField) || 0;
+                    normalizedRow.Type = normalizedRow.Type || (normalizedRow.Earning > 0 ? 'Earning' : 'Expense');
+                }
+                // Ensure Category field
+                normalizedRow.Category = normalizedRow.Category || normalizedRow.category || 'Uncategorized';
+                // Ensure Date field
+                normalizedRow.Date = normalizedRow.Date || normalizedRow.date || new Date().toISOString().split('T')[0];
+                // Ensure userName field
+                normalizedRow.userName = normalizedRow.userName || normalizedRow.username || normalizedRow.user || 'Unknown User';
+                // Ensure emailId field (handling variations) - Prioritize userEmail
+                normalizedRow.emailId = normalizedRow.userEmail || normalizedRow.emailId || normalizedRow.EmailID || normalizedRow.email || 'N/A';
+                return normalizedRow;
+            });
+            filteredData = [...currentData];
+            populateFilters();
+        }
+        // Populate filter options (updated to include emailId)
+        function populateFilters() {
+            // Populate user filter
+            const userFilter = document.getElementById('userFilter');
+            const users = [...new Set(currentData.map(row => row.userName))].sort();
+            userFilter.innerHTML = '<option value="">All Users</option>';
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                userFilter.appendChild(option);
+            });
+            // Populate category filter
+            const categoryFilter = document.getElementById('categoryFilter');
+            const categories = [...new Set(currentData.map(row => row.Category))].sort();
+            categoryFilter.innerHTML = '<option value="">All Categories</option>';
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+            // Populate emailId filter
+            const emailIdFilter = document.getElementById('emailIdFilter');
+            const emailIds = [...new Set(currentData.map(row => row.emailId))].sort();
+            emailIdFilter.innerHTML = '<option value="">All Email IDs</option>';
+            emailIds.forEach(emailId => {
+                if (emailId !== 'N/A') { // Optionally exclude 'N/A' from filter
+                    const option = document.createElement('option');
+                    option.value = emailId;
+                    option.textContent = emailId;
+                    emailIdFilter.appendChild(option);
+                }
+            });
+        }
+        // Apply filters and sorting (updated to include emailIdFilter)
+        function applyFilters() {
+            const userFilter = document.getElementById('userFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const emailIdFilter = document.getElementById('emailIdFilter').value; // New filter
+            const dateFromFilter = document.getElementById('dateFromFilter').value;
+            const dateToFilter = document.getElementById('dateToFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+            filteredData = currentData.filter(row => {
+                if (userFilter && row.userName !== userFilter) return false;
+                if (categoryFilter && row.Category !== categoryFilter) return false;
+                // This is the key filter for type
+                if (typeFilter && row.Type.toLowerCase() !== typeFilter) return false;
+                // New Email ID filter
+                if (emailIdFilter && row.emailId !== emailIdFilter) return false;
+                if (dateFromFilter && new Date(row.Date) < new Date(dateFromFilter)) return false;
+                if (dateToFilter && new Date(row.Date) > new Date(dateToFilter)) return false;
+                return true;
+            });
+            // Sort data
+            filteredData.sort((a, b) => {
+                let aVal, bVal;
+                switch (sortBy) {
+                    case 'amount':
+                        aVal = (a.Earning || 0) + (a.Expenses || 0);
+                        bVal = (b.Earning || 0) + (b.Expenses || 0);
+                        break;
+                    case 'category':
+                        aVal = a.Category;
+                        bVal = b.Category;
+                        break;
+                    case 'emailId': // New sort option
+                        aVal = a.emailId;
+                        bVal = b.emailId;
+                        break;
+                    case 'date':
+                    default:
+                        aVal = new Date(a.Date);
+                        bVal = new Date(b.Date);
+                        break;
+                }
+                if (typeof aVal === 'string') {
+                    return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+            // Update dashboard with filtered data
+            generateKPICards();
+            updateCharts();
+            renderTableRows(filteredData);
+            generateAIInsights();
+            calculateFinanceHealthScore();
+        }
+        // Generate dashboard
+        function generateDashboard() {
+            document.getElementById('dataSourceSection').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('dashboard').classList.add('fade-in');
+            document.getElementById('healthScoreContainer').style.display = 'flex';
+            generateKPICards();
+            generateCharts();
+            generateDataTable();
+            generateAIInsights();
+            calculateFinanceHealthScore();
+        }
+        // Calculate Finance Health Score (updated for Earning)
+        function calculateFinanceHealthScore() {
+            let score = 50; // Base score
+            const totalEarning = filteredData.reduce((sum, row) => sum + (row.Earning || 0), 0);
+            const totalExpenses = filteredData.reduce((sum, row) => sum + (row.Expenses || 0), 0);
+            const netSavings = totalEarning - totalExpenses;
+            const savingsRate = totalEarning > 0 ? (netSavings / totalEarning) * 100 : 0;
+            // Factor 1: Savings rate (40% of score)
+            if (savingsRate > 20) score += 30;
+            else if (savingsRate > 10) score += 20;
+            else if (savingsRate > 0) score += 10;
+            else score -= 20; // Negative savings
+            // Factor 2: Earning diversity (20% of score)
+            const earningCategories = new Set(filteredData.filter(row => row.Earning > 0).map(row => row.Category));
+            if (earningCategories.size > 3) score += 15;
+            else if (earningCategories.size > 1) score += 10;
+            else if (earningCategories.size === 1) score += 5;
+            // Factor 3: Expense control (25% of score)
+            const expenseCategories = filteredData.filter(row => row.Expenses > 0);
+            const necessaryExpenses = expenseCategories.filter(row => 
+                ['Rent', 'Utilities', 'Groceries', 'Insurance', 'Healthcare'].includes(row.Category)
+            ).reduce((sum, row) => sum + row.Expenses, 0);
+            const discretionaryExpenses = totalExpenses - necessaryExpenses;
+            if (totalExpenses > 0) {
+                const necessaryRatio = necessaryExpenses / totalExpenses;
+                if (necessaryRatio > 0.7) score += 20;
+                else if (necessaryRatio > 0.5) score += 15;
+                else score += 5;
+            }
+            // Factor 4: Financial consistency (15% of score)
+            if (filteredData.length > 5) {
+                const monthlyVariation = calculateMonthlyVariation();
+                if (monthlyVariation < 0.3) score += 15;
+                else if (monthlyVariation < 0.5) score += 10;
+                else score += 5;
+            }
+            // Cap the score between 0 and 100
+            score = Math.max(0, Math.min(100, Math.round(score)));
+            updateHealthScoreDisplay(score, savingsRate);
+        }
+        function calculateMonthlyVariation() {
+            const monthlyData = {};
+            filteredData.forEach(row => {
+                const month = new Date(row.Date).toISOString().substr(0, 7);
+                if (!monthlyData[month]) monthlyData[month] = { earning: 0, expenses: 0 };
+                monthlyData[month].earning += row.Earning || 0;
+                monthlyData[month].expenses += row.Expenses || 0;
+            });
+            const monthlyNetValues = Object.values(monthlyData).map(data => data.earning - data.expenses);
+            if (monthlyNetValues.length < 2) return 0;
+            const mean = monthlyNetValues.reduce((sum, val) => sum + val, 0) / monthlyNetValues.length;
+            const variance = monthlyNetValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / monthlyNetValues.length;
+            const stdDev = Math.sqrt(variance);
+            return Math.abs(mean) > 0 ? stdDev / Math.abs(mean) : 0;
+        }
+        function updateHealthScoreDisplay(score, savingsRate) {
+            const scoreNumber = document.getElementById('healthScoreNumber');
+            const scoreStatus = document.getElementById('healthScoreStatus');
+            const scoreCircle = document.getElementById('scoreCircle');
+            // Animate the score
+            let currentScore = 0;
+            const increment = score / 40;
+            const animation = setInterval(() => {
+                currentScore += increment;
+                if (currentScore >= score) {
+                    currentScore = score;
+                    clearInterval(animation);
+                }
+                scoreNumber.textContent = Math.round(currentScore);
+                // Update circle progress
+                const circumference = 2 * Math.PI * 35;
+                const offset = circumference - (currentScore / 100) * circumference;
+                scoreCircle.style.strokeDashoffset = offset;
+            }, 50);
+            // Update status and color
+            let status, color;
+            if (score >= 80) {
+                status = 'Excellent';
+                color = '#10b981';
+            } else if (score >= 60) {
+                status = 'Good';
+                color = '#40E0D0';
+            } else if (score >= 40) {
+                status = 'Fair';
+                color = '#f59e0b';
+            } else {
+                status = 'Needs Improvement';
+                color = '#ef4444';
+            }
+            scoreStatus.textContent = `Gemini's Analysis: ${status}`;
+            scoreCircle.style.stroke = color;
+            // Add savings rate info
+            setTimeout(() => {
+                scoreStatus.textContent += ` • ${savingsRate.toFixed(1)}% savings rate`;
+            }, 2500);
+        }
+        // Generate KPI cards (updated for Earning) - FIXED STRING CONCATENATION
+        function generateKPICards() {
+            const kpis = calculateFinanceKPIs(filteredData);
+            const kpiGrid = document.getElementById('kpiGrid');
+            kpiGrid.innerHTML = '';
+            kpis.forEach((kpi, index) => {
+                const kpiCard = document.createElement('div');
+                kpiCard.className = 'kpi-card';
+                kpiCard.innerHTML = `
+                    <div class="kpi-title">${kpi.title}</div>
+                    <div class="kpi-value ${kpi.editable ? 'editable-kpi' : ''}" 
+                         ${kpi.editable ? `onclick="editKPIValue(this, '${kpi.field}')"` : ''}>
+                        ${kpi.value}
+                    </div>
+                    ${kpi.change ? `<div class="kpi-change ${kpi.change.startsWith('+') ? 'positive' : 'negative'}">${kpi.change}</div>` : ''}
+                `;
+                kpiGrid.appendChild(kpiCard);
+            });
+        }
+        function calculateFinanceKPIs(data) {
+            const totalEarning = data.reduce((sum, row) => sum + (row.Earning || 0), 0);
+            const totalExpenses = data.reduce((sum, row) => sum + (row.Expenses || 0), 0);
+            const netSavings = totalEarning - totalExpenses;
+            const savingsRate = totalEarning > 0 ? (netSavings / totalEarning) * 100 : 0;
+            const kpis = [
+                {
+                    title: 'Total Earning',
+                    // FIXED: Added '$' and '+'
+                    value: '$' + totalEarning.toLocaleString('en-US'),
+                    editable: false
+                },
+                {
+                    title: 'Total Expenses',
+                    // FIXED: Added '$' and '+'
+                    value: '$' + totalExpenses.toLocaleString('en-US'),
+                    editable: false
+                },
+                {
+                    title: 'Net Savings',
+                    // FIXED: Added '$' and '+'
+                    value: '$' + netSavings.toLocaleString('en-US'),
+                    change: netSavings >= 0 ? '+' + ((netSavings / Math.max(totalEarning, 1)) * 100).toFixed(1) + '%' : '-' + Math.abs((netSavings / Math.max(totalEarning, 1)) * 100).toFixed(1) + '%',
+                    editable: false
+                },
+                {
+                    title: 'Savings Rate',
+                    value: savingsRate.toFixed(1) + '%',
+                    editable: false
+                },
+                {
+                    title: 'Total Transactions',
+                    value: data.length.toLocaleString('en-US'),
+                    editable: false
+                },
+                {
+                    title: 'Avg Transaction',
+                    // FIXED: Added '$' and '+'
+                    value: '$' + ((totalEarning + totalExpenses) / Math.max(data.length, 1)).toFixed(2),
+                    editable: false
+                }
+            ];
+            return kpis;
+        }
+        // Generate charts (updated for Earning)
+        function generateCharts() {
+            const chartsGrid = document.getElementById('chartsGrid');
+            chartsGrid.innerHTML = '';
+            // Earning vs Expenses Over Time
+            createFinanceChart('line', 'Earning vs Expenses Trend');
+            // Expense Categories Breakdown
+            createFinanceChart('pie', 'Expense Categories');
+            // Earning Sources
+            createFinanceChart('doughnut', 'Earning Sources');
+            // Monthly Cash Flow
+            createFinanceChart('bar', 'Monthly Cash Flow');
+        }
+        function createFinanceChart(type, title) {
+            const chartsGrid = document.getElementById('chartsGrid');
+            const chartCard = document.createElement('div');
+            chartCard.className = 'chart-card';
+            const chartId = `chart-${Object.keys(charts).length}`;
+            chartCard.innerHTML = `
+                <div class="chart-title">${title}</div>
+                <div class="chart-container">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+            `;
+            chartsGrid.appendChild(chartCard);
+            const chartData = generateFinanceChartData(type, title);
+            const ctx = document.getElementById(chartId).getContext('2d');
+            charts[chartId] = new Chart(ctx, {
+                type: type,
+                data: chartData,
+                options: getFinanceChartOptions(type)
+            });
+        }
+        function generateFinanceChartData(type, title) {
+            let data, labels;
+            if (title.includes('Earning vs Expenses Trend')) {
+                const sortedData = [...filteredData].sort((a, b) => new Date(a.Date) - new Date(b.Date));
+                labels = sortedData.map(row => new Date(row.Date).toLocaleDateString());
+                return {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Earning',
+                            data: sortedData.map(row => row.Earning || 0),
+                            backgroundColor: 'rgba(64, 224, 208, 0.2)',
+                            borderColor: '#40E0D0',
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Expenses',
+                            data: sortedData.map(row => row.Expenses || 0),
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            borderColor: '#ef4444',
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                };
+            } else if (title.includes('Expense Categories')) {
+                const expenseData = {};
+                filteredData.filter(row => row.Expenses > 0).forEach(row => {
+                    expenseData[row.Category] = (expenseData[row.Category] || 0) + row.Expenses;
+                });
+                labels = Object.keys(expenseData);
+                data = Object.values(expenseData);
+            } else if (title.includes('Earning Sources')) {
+                const earningData = {};
+                filteredData.filter(row => row.Earning > 0).forEach(row => {
+                    earningData[row.Category] = (earningData[row.Category] || 0) + row.Earning;
+                });
+                labels = Object.keys(earningData);
+                data = Object.values(earningData);
+            } else if (title.includes('Monthly Cash Flow')) {
+                const monthlyData = {};
+                filteredData.forEach(row => {
+                    const month = new Date(row.Date).toLocaleString('default', { month: 'short', year: 'numeric' });
+                    if (!monthlyData[month]) monthlyData[month] = { earning: 0, expenses: 0 };
+                    monthlyData[month].earning += row.Earning || 0;
+                    monthlyData[month].expenses += row.Expenses || 0;
+                });
+                labels = Object.keys(monthlyData);
+                return {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Earning',
+                            data: labels.map(month => monthlyData[month].earning),
+                            backgroundColor: 'rgba(64, 224, 208, 0.8)',
+                            borderColor: '#40E0D0',
+                            borderWidth: 2,
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Expenses',
+                            data: labels.map(month => monthlyData[month].expenses),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderRadius: 8
+                        }
+                    ]
+                };
+            } else {
+                labels = ['No Data'];
+                data = [0];
+            }
+            return {
+                labels: labels,
+                datasets: [{
+                    label: title,
+                    data: data,
+                    backgroundColor: generateFinanceColors(labels.length),
+                    borderColor: generateFinanceColors(labels.length, 1),
+                    borderWidth: 3
+                }]
+            };
+        }
+        function generateFinanceColors(count, alpha = 0.8) {
+            const baseColors = [
+                `rgba(64, 224, 208, ${alpha})`,   // Turquoise
+                `rgba(239, 68, 68, ${alpha})`,    // Red
+                `rgba(245, 158, 11, ${alpha})`,   // Yellow
+                `rgba(16, 185, 129, ${alpha})`,   // Green
+                `rgba(108, 117, 125, ${alpha})`,  // Gray
+                `rgba(139, 92, 246, ${alpha})`,   // Purple
+                `rgba(236, 72, 153, ${alpha})`,   // Pink
+                `rgba(59, 130, 246, ${alpha})`    // Blue
+            ];
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                colors.push(baseColors[i % baseColors.length]);
+            }
+            return colors;
+        }
+        // Get Finance Chart Options - FIXED STRING CONCATENATION
+        function getFinanceChartOptions(type) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: type === 'pie' || type === 'doughnut' ? 'bottom' : 'top',
+                        labels: {
+                            padding: 25,
+                            usePointStyle: true,
+                            font: {
+                                family: 'Inter',
+                                weight: '600'
+                            }
+                        }
+                    }
+                },
+                scales: type === 'pie' || type === 'doughnut' ? {} : {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            // FIXED: Added '$' and '+'
+                            callback: function(value) {
+                                return '$' + value.toLocaleString('en-US');
+                            },
+                            font: {
+                                family: 'Inter',
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                family: 'Inter',
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                }
+            };
+        }
+        function updateCharts() {
+            Object.keys(charts).forEach(chartId => {
+                charts[chartId].destroy();
+            });
+            charts = {};
+            generateCharts();
+        }
+        // Generate AI insights (updated for Earning)
+        function generateAIInsights() {
+            const insights = calculateAIInsights(filteredData);
+            const insightsGrid = document.getElementById('insightsGrid');
+            insightsGrid.innerHTML = '';
+            insights.forEach(insight => {
+                const insightCard = document.createElement('div');
+                insightCard.className = 'insight-card';
+                insightCard.innerHTML = `
+                    <div class="insight-type">${insight.type}</div>
+                    <div class="insight-text">${insight.text}</div>
+                `;
+                insightsGrid.appendChild(insightCard);
+            });
+        }
+        function calculateAIInsights(data) {
+            const insights = [
+                {
+                    type: 'Powered by Gemini',
+                    text: 'These financial insights are analyzed and generated by Google\'s Gemini, providing a deep dive into your spending and earning patterns.'
+                }
+            ];
+            const totalEarning = data.reduce((sum, row) => sum + (row.Earning || 0), 0);
+            const totalExpenses = data.reduce((sum, row) => sum + (row.Expenses || 0), 0);
+            // Spending pattern analysis
+            const expenseCategories = {};
+            data.filter(row => row.Expenses > 0).forEach(row => {
+                expenseCategories[row.Category] = (expenseCategories[row.Category] || 0) + row.Expenses;
+            });
+            const topExpenseCategory = Object.keys(expenseCategories).reduce((a, b) => 
+                expenseCategories[a] > expenseCategories[b] ? a : b, '');
+            if (topExpenseCategory) {
+                const percentage = ((expenseCategories[topExpenseCategory] / totalExpenses) * 100).toFixed(1);
+                insights.push({
+                    type: 'Spending Analysis',
+                    text: `Your highest expense category is "${topExpenseCategory}" at ${percentage}% of total expenses ($${expenseCategories[topExpenseCategory].toLocaleString('en-US')}). Consider reviewing this category for potential savings.`
+                });
+            }
+            // Earning diversity analysis
+            const earningCategories = {};
+            data.filter(row => row.Earning > 0).forEach(row => {
+                earningCategories[row.Category] = (earningCategories[row.Category] || 0) + row.Earning;
+            });
+            const earningSourceCount = Object.keys(earningCategories).length;
+            if (earningSourceCount === 1) {
+                insights.push({
+                    type: 'Earning Diversification',
+                    text: 'You have a single earning source. Consider diversifying your earning streams through side hustles, investments, or passive earning to improve financial stability.'
+                });
+            } else if (earningSourceCount > 3) {
+                insights.push({
+                    type: 'Earning Diversification',
+                    text: `Excellent! You have ${earningSourceCount} earning sources, which provides good financial diversification and reduces risk.`
+                });
+            }
+            // Savings rate insight
+            const savingsRate = totalEarning > 0 ? ((totalEarning - totalExpenses) / totalEarning) * 100 : 0;
+            if (savingsRate < 10 && savingsRate >= 0) {
+                insights.push({
+                    type: 'Savings Recommendation',
+                    text: `Your savings rate is ${savingsRate.toFixed(1)}%. Financial experts recommend saving at least 20% of earning. Try the 50/30/20 rule: 50% needs, 30% wants, 20% savings.`
+                });
+            } else if (savingsRate > 30) {
+                insights.push({
+                    type: 'Savings Achievement',
+                    text: `Outstanding savings rate of ${savingsRate.toFixed(1)}%! You're building wealth effectively. Consider investing surplus savings for long-term growth.`
+                });
+            }
+            // Monthly trend analysis
+            const monthlyData = {};
+            data.forEach(row => {
+                const month = new Date(row.Date).toISOString().substr(0, 7);
+                if (!monthlyData[month]) monthlyData[month] = { earning: 0, expenses: 0 };
+                monthlyData[month].earning += row.Earning || 0;
+                monthlyData[month].expenses += row.Expenses || 0;
+            });
+            const months = Object.keys(monthlyData).sort();
+            if (months.length >= 2) {
+                const recentMonth = monthlyData[months[months.length - 1]];
+                const previousMonth = monthlyData[months[months.length - 2]];
+                if (previousMonth.expenses > 0) {
+                    const expenseChange = ((recentMonth.expenses - previousMonth.expenses) / previousMonth.expenses) * 100;
+                    if (expenseChange > 20) {
+                        insights.push({
+                            type: 'Spending Alert',
+                            text: `Your expenses increased by ${expenseChange.toFixed(1)}% last month. Review your recent purchases and identify any unusual spending patterns.`
+                        });
+                    } else if (expenseChange < -10) {
+                        insights.push({
+                            type: 'Spending Achievement',
+                            text: `Great job! Your expenses decreased by ${Math.abs(expenseChange).toFixed(1)}% last month. Keep up the good spending discipline.`
+                        });
+                    }
+                }
+            }
+            return insights.slice(0, 4); // Show top 4 insights
+        }
+        // Generate data table (updated - added Email ID column)
+        function generateDataTable() {
+            const table = document.getElementById('dataTable');
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            if (currentData.length === 0) return;
+            // Create header with sorting (added Email ID)
+            const headerRow = document.createElement('tr');
+            // Use actual data property names for sorting logic
+            const columns = ['Date', 'Category', 'Type', 'Earning', 'Expenses', 'userName', 'emailId'];
+            columns.forEach(column => {
+                const th = document.createElement('th');
+                // Display 'User' and 'Email ID' in header but sort by 'userName' and 'emailId'
+                const displayText = column === 'userName' ? 'User' : column === 'emailId' ? 'Email ID' : column;
+                th.innerHTML = `${displayText} <i class="fas fa-sort sort-icon"></i>`;
+                th.onclick = () => sortTableByColumn(column);
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            renderTableRows(filteredData);
+        }
+        // Render Table Rows - FIXED STRING CONCATENATION (updated to include emailId)
+        function renderTableRows(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            data.slice(0, 100).forEach((row, index) => {
+                const tr = document.createElement('tr');
+                // Use actual data property names
+                const columns = ['Date', 'Category', 'Type', 'Earning', 'Expenses', 'userName', 'emailId'];
+                columns.forEach(column => {
+                    const td = document.createElement('td');
+                    td.className = 'editable-cell';
+                    let value = row[column];
+                    if (column === 'Earning' || column === 'Expenses') {
+                        // FIXED: Added '$' and '+'
+                        value = value ? '$' + parseFloat(value).toLocaleString('en-US') : '$0';
+                    }
+                    if (column === 'userName') {
+                         value = row.userName || row.username || row.user || 'Unknown User';
+                    }
+                    if (column === 'emailId') {
+                         value = row.emailId || 'N/A';
+                    }
+                    td.textContent = value || '';
+                    td.onclick = () => editTableCell(td, row, column, index);
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+        // Inline editing functions (updated for Earning) - FIXED STRING CONCATENATION
+        function editTableCell(cell, row, column, rowIndex) {
+            if (editingCell) return; // Prevent multiple edits
+            editingCell = cell;
+            const originalValue = row[column];
+            cell.classList.add('editing');
+            const input = document.createElement('input');
+            input.type = column === 'Date' ? 'date' : 'text';
+            input.value = originalValue || '';
+            if (column === 'Earning' || column === 'Expenses') {
+                input.value = originalValue || 0;
+                input.type = 'number';
+                input.min = '0';
+                input.step = '0.01';
+            }
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+            function finishEdit() {
+                let newValue = input.value;
+                if (column === 'Earning' || column === 'Expenses') {
+                    newValue = parseFloat(newValue) || 0;
+                    row[column] = newValue;
+                    // FIXED: Added '$' and '+'
+                    cell.textContent = '$' + newValue.toLocaleString('en-US');
+                } else {
+                    row[column] = newValue;
+                    cell.textContent = newValue;
+                }
+                // Update the original data
+                const originalIndex = originalData.findIndex(r => r === row);
+                if (originalIndex !== -1) {
+                    originalData[originalIndex][column] = newValue;
+                }
+                cell.classList.remove('editing');
+                editingCell = null;
+                // Refresh dashboard components
+                applyFilters();
+            }
+            input.onblur = finishEdit;
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    finishEdit();
+                } else if (e.key === 'Escape') {
+                    cell.classList.remove('editing');
+                    cell.textContent = originalValue || '';
+                    editingCell = null;
+                }
+            };
+        }
+        function sortTableByColumn(column) {
+            const isAscending = !sortTableByColumn.ascending;
+            sortTableByColumn.ascending = isAscending;
+            filteredData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                if (column === 'Earning' || column === 'Expenses') {
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                } else if (column === 'Date') {
+                    aVal = new Date(aVal);
+                    bVal = new Date(bVal);
+                }
+                if (typeof aVal === 'string') {
+                    return isAscending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return isAscending ? aVal - bVal : bVal - aVal;
+                }
+            });
+            renderTableRows(filteredData);
+        }
+        // Filter table based on search input (updated to include emailId in search)
+        function filterTable() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            if (!searchTerm) {
+                filteredData = [...currentData];
+            } else {
+                filteredData = currentData.filter(row =>
+                    // Include emailId in the search criteria
+                    Object.values(row).some(value =>
+                        value && value.toString().toLowerCase().includes(searchTerm)
+                    )
+                );
+            }
+            renderTableRows(filteredData);
+            updateCharts();
+            generateKPICards();
+            generateAIInsights();
+            calculateFinanceHealthScore();
+        }
+        // Export functions
+        function exportDashboardScreenshot() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+            // Hide controls that shouldn't be in the screenshot
+            const controlsToHide = ['.export-controls', '.controls-section input', '.search-box'];
+            const hiddenElements = [];
+            controlsToHide.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (el.style.display !== 'none') {
+                        hiddenElements.push({ element: el, originalDisplay: el.style.display });
+                        el.style.display = 'none';
+                    }
+                });
+            });
+            setTimeout(() => {
+                html2canvas(document.getElementById('dashboard'), {
+                    height: window.innerHeight,
+                    width: window.innerWidth,
+                    scrollX: 0,
+                    scrollY: 0,
+                    useCORS: true,
+                    scale: 2,
+                    backgroundColor: isDarkMode ? '#0f0f0f' : '#ffffff'
+                }).then(canvas => {
+                    // Restore hidden elements
+                    hiddenElements.forEach(({ element, originalDisplay }) => {
+                        element.style.display = originalDisplay;
+                    });
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    const imgWidth = 297; // A4 landscape width in mm
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+                    // Add header
+                    pdf.setFontSize(18);
+                    pdf.setTextColor(64, 224, 208);
+                    pdf.text('Finance Dashboard Report', 15, 15);
+                    pdf.setFontSize(12);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 15, 25);
+                    const healthScore = document.getElementById('healthScoreNumber').textContent;
+                    pdf.text(`Gemini Finance Health Score: ${healthScore}/100`, 180, 25);
+                    pdf.save('finance-dashboard-report.pdf');
+                    loadingOverlay.style.display = 'none';
+                    showMessage('Dashboard screenshot exported as PDF successfully!', 'success');
+                }).catch(error => {
+                    // Restore hidden elements on error
+                    hiddenElements.forEach(({ element, originalDisplay }) => {
+                        element.style.display = originalDisplay;
+                    });
+                    loadingOverlay.style.display = 'none';
+                    console.error('Export error:', error);
+                    showMessage('Error exporting dashboard. Please try again.', 'error');
+                });
+            }, 500);
+        }
+        function exportToCSV() {
+            if (filteredData.length === 0) {
+                showMessage('No data available to export.', 'error');
+                return;
+            }
+            const csv = Papa.unparse(filteredData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'finance-data.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showMessage('Finance data exported as CSV successfully!', 'success');
+            }
+        }
+        // Utility functions
+        function showFirebaseMessage(message, type) {
+            const messageContainer = document.getElementById('firebaseMessageContainer');
+            messageContainer.innerHTML = '';
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i> ${message}`;
+            messageContainer.appendChild(messageDiv);
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, type === 'success' ? 3000 : 8000);
+        }
+        function showMessage(message, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i> ${message}`;
+            messageContainer.appendChild(messageDiv);
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+        function showProgress(containerId, barId) {
+            document.getElementById(containerId).style.display = 'block';
+            document.getElementById(barId).style.width = '0%';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 12;
+                document.getElementById(barId).style.width = `${progress}%`;
+                if (progress >= 90) {
+                    clearInterval(interval);
+                }
+            }, 80);
+        }
+        function hideProgress(containerId) {
+            setTimeout(() => {
+                document.getElementById(containerId).style.display = 'none';
+            }, 300);
+        }
+        // File upload drag and drop
+        function setupFileUpload() {
+            const fileUpload = document.getElementById('fileUpload');
+            fileUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUpload.style.background = 'rgba(64, 224, 208, 0.15)';
+                fileUpload.style.transform = 'scale(1.02)';
+            });
+            fileUpload.addEventListener('dragleave', () => {
+                fileUpload.style.background = 'var(--primary-white)';
+                fileUpload.style.transform = 'scale(1)';
+            });
+            fileUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUpload.style.background = 'var(--primary-white)';
+                fileUpload.style.transform = 'scale(1)';
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleCSVFile(files[0]);
+                }
+            });
+        }
+        function handleCSVFile(file) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showMessage('Please select a valid CSV file.', 'error');
+                return;
+            }
+            showProgress('csvProgress', 'csvProgressBar');
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    hideProgress('csvProgress');
+                    if (results.data.length === 0) {
+                        showMessage('CSV file is empty. Loading sample data for demo.', 'warning');
+                        loadPersonalFinanceData();
+                        return;
+                    }
+                    originalData = results.data;
+                    processFinanceData();
+                    showMessage(`Successfully loaded ${currentData.length} records from CSV.`, 'success');
+                    setTimeout(() => {
+                        generateDashboard();
+                    }, 1000);
+                },
+                error: function(error) {
+                    hideProgress('csvProgress');
+                    showMessage(`Error parsing CSV: ${error.message}`, 'error');
+                }
+            });
+        }
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUpload();
+            document.querySelector('.container').classList.add('fade-in');
+            // Set default date filters to current month
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            document.getElementById('dateFromFilter').valueAsDate = firstDay;
+            document.getElementById('dateToFilter').valueAsDate = lastDay;
+            // Add focus effects to inputs
+            document.querySelectorAll('.control-input, .search-box').forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.style.transform = 'scale(1.02)';
+                });
+                input.addEventListener('blur', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        });
+    </script>
 </body>
 </html>
