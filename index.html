@@ -1372,14 +1372,24 @@
             ];
         }
 
-        // Generate charts
+        // --- MODIFIED SECTION: Generate more charts ---
         function generateCharts() {
             const chartsGrid = document.getElementById('chartsGrid');
             chartsGrid.innerHTML = '';
-            createFinanceChart('line', 'Earning vs Expenses Trend', 'full-width', 'tall');
-            createFinanceChart('pie', 'Expense Categories', 'half-width');
+            
+            // Row 1 & 2: Full width trend charts
+            createFinanceChart('line', 'Earning vs Expenses Trend', 'full-width');
+            createFinanceChart('line', 'Cumulative Net Savings Trend', 'full-width');
+            
+            // Row 3: Two half-width charts for breakdowns
+            createFinanceChart('pie', 'Top 5 Expense Categories', 'half-width');
             createFinanceChart('doughnut', 'Earning Sources', 'half-width');
+
+            // Row 4: Two more half-width charts for comparisons
+            createFinanceChart('bar', 'Earning & Expense by User', 'half-width');
+            createFinanceChart('bar', 'Spending by Day of the Week', 'half-width');
         }
+        // --- END MODIFIED SECTION ---
 
         function createFinanceChart(type, title, width = 'half-width', height = '') {
             const chartsGrid = document.getElementById('chartsGrid');
@@ -1392,49 +1402,98 @@
             chartsGrid.appendChild(chartCard);
             const chartData = generateFinanceChartData(type, title);
             const ctx = document.getElementById(chartId).getContext('2d');
-            charts[chartId] = new Chart(ctx, { type: type, data: chartData, options: getFinanceChartOptions(type) });
+            charts[chartId] = new Chart(ctx, { type: type, data: chartData, options: getFinanceChartOptions(type, title) });
         }
 
+        // --- MODIFIED SECTION: Add data processing for new charts ---
         function generateFinanceChartData(type, title) {
             let data, labels;
+            const sortedDataByDate = [...filteredData].sort((a, b) => new Date(a.Date) - new Date(b.Date));
+
             if (title.includes('Earning vs Expenses Trend')) {
-                const sortedData = [...filteredData].sort((a, b) => new Date(a.Date) - new Date(b.Date));
-                labels = [...new Set(sortedData.map(row => new Date(row.Date).toLocaleDateString()))];
-                const earningData = labels.map(label => sortedData.filter(r => new Date(r.Date).toLocaleDateString() === label).reduce((sum, r) => sum + r.Earning, 0));
-                const expensesData = labels.map(label => sortedData.filter(r => new Date(r.Date).toLocaleDateString() === label).reduce((sum, r) => sum + r.Expenses, 0));
+                labels = [...new Set(sortedDataByDate.map(r => new Date(r.Date).toLocaleDateString()))];
+                const earningByDate = labels.map(date => sortedDataByDate.filter(r => new Date(r.Date).toLocaleDateString() === date).reduce((sum, r) => sum + r.Earning, 0));
+                const expensesByDate = labels.map(date => sortedDataByDate.filter(r => new Date(r.Date).toLocaleDateString() === date).reduce((sum, r) => sum + r.Expenses, 0));
                 return {
-                    labels: labels,
+                    labels,
                     datasets: [
-                        { label: 'Earning', data: earningData, backgroundColor: 'rgba(64, 224, 208, 0.2)', borderColor: '#40E0D0', borderWidth: 3, tension: 0.4 },
-                        { label: 'Expenses', data: expensesData, backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: '#ef4444', borderWidth: 3, tension: 0.4 }
+                        { label: 'Earning', data: earningByDate, backgroundColor: 'rgba(64, 224, 208, 0.2)', borderColor: '#40E0D0', borderWidth: 2, tension: 0.4, fill: true },
+                        { label: 'Expenses', data: expensesByDate, backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: '#ef4444', borderWidth: 2, tension: 0.4, fill: true }
                     ]
                 };
-            } else if (title.includes('Expense Categories')) {
+            } else if (title.includes('Cumulative Net Savings Trend')) {
+                let cumulativeNet = 0;
+                const cumulativeData = sortedDataByDate.map(row => {
+                    cumulativeNet += (row.Earning || 0) - (row.Expenses || 0);
+                    return { date: new Date(row.Date).toLocaleDateString(), net: cumulativeNet };
+                });
+                labels = [...new Set(cumulativeData.map(d => d.date))];
+                data = labels.map(date => cumulativeData.filter(d => d.date === date).pop().net); // Get last net for each day
+                 return {
+                    labels,
+                    datasets: [{
+                        label: 'Net Worth Trend', data,
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)', borderColor: 'var(--accent-purple)',
+                        borderWidth: 2, tension: 0.4, fill: true
+                    }]
+                };
+            } else if (title.includes('Top 5 Expense Categories')) {
                 const expenseData = {};
                 filteredData.filter(row => row.Expenses > 0).forEach(row => { expenseData[row.Category] = (expenseData[row.Category] || 0) + row.Expenses; });
-                labels = Object.keys(expenseData); data = Object.values(expenseData);
+                const sortedExpenses = Object.entries(expenseData).sort(([,a],[,b]) => b-a);
+                
+                labels = sortedExpenses.slice(0, 5).map(item => item[0]);
+                data = sortedExpenses.slice(0, 5).map(item => item[1]);
+                const otherSum = sortedExpenses.slice(5).reduce((sum, item) => sum + item[1], 0);
+                if(otherSum > 0) {
+                    labels.push('Other');
+                    data.push(otherSum);
+                }
             } else if (title.includes('Earning Sources')) {
                 const earningData = {};
                 filteredData.filter(row => row.Earning > 0).forEach(row => { earningData[row.Category] = (earningData[row.Category] || 0) + row.Earning; });
                 labels = Object.keys(earningData); data = Object.values(earningData);
+            } else if (title.includes('Earning & Expense by User')) {
+                const userData = {};
+                filteredData.forEach(row => {
+                    if (!userData[row.userName]) userData[row.userName] = { earning: 0, expenses: 0 };
+                    userData[row.userName].earning += row.Earning || 0;
+                    userData[row.userName].expenses += row.Expenses || 0;
+                });
+                labels = Object.keys(userData);
+                return {
+                    labels,
+                    datasets: [
+                        { label: 'Total Earning', data: labels.map(u => userData[u].earning), backgroundColor: 'rgba(64, 224, 208, 0.8)' },
+                        { label: 'Total Expenses', data: labels.map(u => userData[u].expenses), backgroundColor: 'rgba(239, 68, 68, 0.8)' }
+                    ]
+                };
+            } else if (title.includes('Spending by Day of the Week')) {
+                labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                data = Array(7).fill(0);
+                filteredData.forEach(row => {
+                    const day = new Date(row.Date).getDay();
+                    data[day] += row.Expenses || 0;
+                });
             }
              return {
-                labels: labels,
+                labels,
                 datasets: [{
-                    label: title, data: data,
+                    label: title, data,
                     backgroundColor: generateFinanceColors(labels.length),
                     borderColor: generateFinanceColors(labels.length, 1),
                     borderWidth: 3
                 }]
             };
         }
+        // --- END MODIFIED SECTION ---
 
         function generateFinanceColors(count, alpha = 0.8) {
             const baseColors = [`rgba(64, 224, 208, ${alpha})`, `rgba(239, 68, 68, ${alpha})`, `rgba(245, 158, 11, ${alpha})`, `rgba(16, 185, 129, ${alpha})`, `rgba(139, 92, 246, ${alpha})`, `rgba(236, 72, 153, ${alpha})`, `rgba(59, 130, 246, ${alpha})`];
             return Array.from({ length: count }, (_, i) => baseColors[i % baseColors.length]);
         }
 
-        function getFinanceChartOptions(type) {
+        function getFinanceChartOptions(type, title) {
             const baseOptions = {
                 responsive: true, maintainAspectRatio: false,
                 plugins: {
@@ -1445,13 +1504,21 @@
                 }
             };
             if (type === 'pie' || type === 'doughnut') return baseOptions;
+            
+            const scalesOptions = {
+                y: { beginAtZero: true, ticks: { callback: value => '$' + value.toLocaleString(), font: { family: 'Inter', weight: '500' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { ticks: { font: { family: 'Inter', weight: '500' } }, grid: { display: false } }
+            };
+
+            if (title && title.includes('Earning & Expense by User')) {
+                scalesOptions.x.stacked = true;
+                scalesOptions.y.stacked = true;
+            }
+
             return {
                 ...baseOptions,
                 plugins: {...baseOptions.plugins, legend: {...baseOptions.plugins.legend, position: 'top'}},
-                scales: {
-                    y: { beginAtZero: true, ticks: { callback: value => '$' + value.toLocaleString(), font: { family: 'Inter', weight: '500' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                    x: { ticks: { font: { family: 'Inter', weight: '500' } }, grid: { display: false } }
-                }
+                scales: scalesOptions
             };
         }
 
